@@ -1,0 +1,192 @@
+# XDG env vars compat
+include /etc/sway/config.d/*
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+
+
+# ------
+# global
+# ------
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+set $ws6 "6"
+set $ws7 "7"
+set $ws8 "8"
+set $ws9 "9"
+set $ws10 "0"
+
+set $c_background #000000
+set $c_active     #ffffff
+set $c_inactive   #000000
+
+# -----
+# style
+# -----
+font pango:JetBrainsMono Nerd Font 11
+
+default_border pixel 0
+
+client.background $c_background
+#                border      background  text        next_window
+client.focused   $c_active   $c_active   $c_active   $c_active
+client.unfocused $c_inactive $c_inactive $c_inactive $c_inactive
+
+gaps outer 0
+gaps inner 0
+
+# Start swaybar to display a workspace bar (plus the system information i3status)
+bar {
+        swaybar_command waybar
+
+	mode hide
+	hidden_state hide
+	modifier Mod4
+}
+
+# -----------
+# assignments
+# -----------
+assign [app_id="alacritty"] $ws1
+assign [app_id="zen"] $ws2
+assign [app_id="spotify"] $ws4
+assign [instance="vscodium-bin"] $ws5
+assign [title="^dev:"] $ws9
+
+# Utilitários que devem sempre abrir flutuando
+for_window [app_id="pavucontrol"] floating enable
+for_window [app_id="qpwgraph"] floating enable
+for_window [app_id="nm-connection-editor"] floating enable
+for_window [app_id="blueman-manager"] floating enable
+for_window [class="Wine"] floating enable
+for_window [class="Wine"] sticky enable
+
+
+# --------
+# monitors
+# --------
+set $ds_ext "HDMI-A-1"
+set $ds_int "eDP-1"
+
+# Symlink the wallpaper to ~/Pictures/wallpaper.jpg
+output $ds_int pos 0 1600 background ~/Pictures/wallpaper.png fill $c_background
+output $ds_ext enable pos 0 0 res 2560 1600 background ~/Pictures/wallpaper.png fill $c_background
+output $ds_int adaptive_sync on
+output $ds_ext adaptive_sync on
+workspace $ws1 output $ds_ext $ds_int
+workspace $ws2 output $ds_ext $ds_int
+workspace $ws3 output $ds_ext $ds_int
+workspace $ws4 output $ds_ext $ds_int
+workspace $ws5 output $ds_ext $ds_int
+workspace $ws6 output $ds_int
+workspace $ws7 output $ds_int
+workspace $ws8 output $ds_int
+workspace $ws9 output $ds_int
+workspace $ws10 output $ds_int
+
+
+# -----
+# input
+# -----
+input "type:touchpad" {
+	tap enabled
+	# tap with 1 finger = left click, 2 fingers = right click, 3 fingers = middle click
+	tap_button_map lrm
+	# disable (touchpad) while typing
+	dwt enabled
+}
+
+
+# ----
+# keys
+# ----
+bindsym Mod4+Shift+q kill 
+
+bindsym Mod4+Shift+t exec "alacritty"
+bindsym Mod4+space exec "rofi -show drun"
+bindsym Mod4+z exec "zen-browser"
+bindsym Mod4+s exec "spotify-launcher"
+
+
+# change focus
+bindsym Mod4+h focus left
+bindsym Mod4+j focus down
+bindsym Mod4+k focus up
+bindsym Mod4+l focus right
+
+# move focused window
+bindsym Mod4+Shift+h move left
+bindsym Mod4+Shift+j move down
+bindsym Mod4+Shift+k move up
+bindsym Mod4+Shift+l move right
+
+# enter fullscreen mode for the focused container
+bindsym Mod4+f fullscreen toggle
+
+# switch to workspace
+bindsym Mod4+1 workspace number $ws1
+bindsym Mod4+2 workspace number $ws2
+bindsym Mod4+3 workspace number $ws3
+bindsym Mod4+4 workspace number $ws4
+bindsym Mod4+5 workspace number $ws5
+bindsym Mod4+6 workspace number $ws6
+bindsym Mod4+7 workspace number $ws7
+bindsym Mod4+8 workspace number $ws8
+bindsym Mod4+9 workspace number $ws9
+bindsym Mod4+0 workspace number $ws10
+
+# move focused container to workspace
+bindsym Mod4+Shift+1 move container to workspace number $ws1
+bindsym Mod4+Shift+2 move container to workspace number $ws2
+bindsym Mod4+Shift+3 move container to workspace number $ws3
+bindsym Mod4+Shift+4 move container to workspace number $ws4
+bindsym Mod4+Shift+5 move container to workspace number $ws5
+bindsym Mod4+Shift+6 move container to workspace number $ws6
+bindsym Mod4+Shift+7 move container to workspace number $ws7
+bindsym Mod4+Shift+8 move container to workspace number $ws8
+bindsym Mod4+Shift+9 move container to workspace number $ws9
+bindsym Mod4+Shift+0 move container to workspace number $ws10
+
+# reload the configuration file
+bindsym Mod4+r reload
+
+## volume control
+set $uictl ~/.local/bin/uictl
+bindsym --locked XF86AudioRaiseVolume exec $uictl volume up 5
+bindsym --locked XF86AudioLowerVolume exec $uictl volume down 5
+bindsym --locked XF86AudioMute        exec $uictl volume mute
+bindsym --locked XF86AudioMicMute     exec pactl set-source-mute @DEFAULT_SOURCE@ toggle
+
+# suspend
+exec xss-lock --transfer-sleep-lock -- swaylock --nofork
+bindsym Mod4+control+q exec swaylock --color=000000
+
+# --------
+# services
+# --------
+
+# notifications
+exec mako
+
+# Bluetooth
+exec blueman-applet
+
+# Wi-fi icon
+exec nm-applet --indicator
+
+# polkit authentication agent
+exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+
+# screenshot
+bindsym Print exec grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%s).png
+
+# keyboard
+input * {
+    xkb_layout "br"
+    xkb_variant "abnt2"
+}
+
+# Clipboard
+exec wl-paste --watch cliphist store
+bindsym Mod4+v exec cliphist list | rofi -dmenu | cliphist decode | wl-copy
